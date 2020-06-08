@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta http-equiv="X-UA-Compatible" content="ie=edge">
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+        <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+        <title>GoGet</title>
+    </head>
+<body>
+    <div class="container">
+        <h2 id="text-center">Enter Address:</h2>
+        <form id="location-form" >
+            <div class="row">
+                <div class="col-md-6">
+                    <input type="text" id="search" name="search" class="form-control form-control-lg">
+                </div>
+                <div class="col-md-6" id="inputIcon"></div>
+            </div>
+            <input type="hidden" id="lat" name="lat">
+            <input type="hidden" id="lng" name="lng">
+            <ul class="list-group" id="result"></ul>
+            <br>
+            <div class="col-md-6">
+                <button type="submit" class="btn btn-primary btn-block">Check with GoGet</button>
+            </div>
+        </form>
+    </div>
+    
+    <script>
+        $(document).ready(function(){
+            /** Get search value while typing */
+            $("#search").keyup(function(){
+                $("#result").html();
+                var searchField = $("#search").val();
+                    console.log (searchField)
+
+                /** Get data from google places api */
+                $.ajax({
+                    type: "GET",
+                    url: "https://maps.googleapis.com/maps/api/geocode/json",
+                    data:{
+                        address: searchField,
+                        key:'AIzaSyA0UfxIJMxrQXWKJf_nzzCoGXqeKm5aeXw'
+                    },
+                    success: function (places){
+                        $.each(places.results, function(key, value){
+                            console.log("address", value.formatted_address);
+
+                            /** Response from google api showing here */
+                            $("#result").html("<li id=\"item\" value=" + key + " class=\"list-group-item\">" + value.formatted_address + "</li>");
+                            
+                            $("#item").click(function(){
+                                console.log('Clicked list. ' + $(this).attr("value"));
+
+                                /** Assign value to hidden input */
+                                if (key == $(this).attr("value")) {
+                                    console.log("Assinged", value.geometry.location.lat, value.geometry.location.lat)
+                                    $("#lat").val(value.geometry.location.lat);
+                                    $("#lng").val(value.geometry.location.lng);
+
+                                    /** Remove result list after click */
+                                    $("#result").empty();
+                                }
+                            })
+                        });
+                    },
+                    error: function (){
+                        $("#result").empty();
+                    }
+                });
+            });
+
+            /** Console log submitted value */
+            $("#location-form").submit(function(e){
+                e.preventDefault();
+                var lat = $("#lat").val();
+                var lng = $("#lng").val();
+
+                console.log("lat", lat);
+                console.log("lng", lng);
+
+                var data = {
+                    lat: lat,
+                    lng: lng,
+                }
+
+                $.ajax({
+                    type: "POST",
+                    url: "https://staging-api.goget.my/api/public/v1/jobs/location_check",
+                    data:{
+                        lat: lat,
+                        long: lng,
+                    },
+                    success: function (result){
+                        $("#inputIcon").html('<img src="https://image.flaticon.com/icons/svg/1828/1828640.svg"width="30" height="30">');
+
+                        console.log("checking result", result);
+                    }, 
+                     error: function (error){
+                        $("#inputIcon").html('<img src="https://image.flaticon.com/icons/svg/1828/1828843.svg"width="30" height="30">');
+
+                        console.log("checking error", result);
+                        }});
+                   
+        
+            })
+
+        })
+    </script>
+</body>
+</html>
